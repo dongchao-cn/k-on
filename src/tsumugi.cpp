@@ -19,7 +19,7 @@ using namespace std;
 
 const int BUF_SIZE = 1024;
 const int BACKLOG = 3;
-const int MAX_EVENT_NUM = 2;
+const int MAX_EVENT_NUM = 10;
 
 int main(int argc, char *argv[])
 {

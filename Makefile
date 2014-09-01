@@ -1,7 +1,7 @@
 DEBUG = -DDEBUG -g
 # DEBUG = 
 
-all: 
+all: azusa tsumugi yui
 	@echo DONE!
 
 azusa: protocol node socketop
@@ -12,6 +12,9 @@ tsumugi: protocol node socketop
 	-mkdir bin
 	g++ -o bin/tsumugi src/tsumugi.cpp build/Protocol.o build/Node.o build/SocketOp.o $(DEBUG)
 
+yui: protocol node socketop
+	-mkdir bin
+	g++ -o bin/yui src/yui.cpp build/Protocol.o build/Node.o build/SocketOp.o $(DEBUG)
 
 protocol:
 	-mkdir build
