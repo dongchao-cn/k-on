@@ -16,7 +16,11 @@ class Package
 public:
     Package(string &stream);
 
+    Package(unsigned int size, string content);
+
     string serialize();
+
+    void print();
 
     static void str2pkg(string &stream, vector<Package> &pkgs);
 
@@ -41,6 +45,8 @@ public:
     int const get_proxy_id();
 
     Package const &get_pkg();
+
+    void print();
 
     static void str2pkg(int proxy_id, int client_sock, string &stream, vector<ProxyPackage> &pkgs);
 

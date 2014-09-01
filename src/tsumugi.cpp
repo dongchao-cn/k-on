@@ -5,19 +5,21 @@
 #include <cstdlib>
 #include <string>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <boost/container/vector.hpp>
 #include <boost/lexical_cast.hpp>
-using namespace std;
+#include "SocketOp.h"
+#include "Node.h"
 
-#ifdef DEBUG
-#define print(fmt, arg...) printf(fmt, ##arg)
-#else
-#define print(fmt, arg...)
-#endif
+#define PROXY_ID 1
+
+using namespace std;
 
 const int BUF_SIZE = 1024;
 const int BACKLOG = 3;
+const int MAX_EVENT_NUM = 2;
 
 int main(int argc, char *argv[])
 {
@@ -26,62 +28,83 @@ int main(int argc, char *argv[])
     int interval = boost::lexical_cast<int>(argv[3]);
 
     //Create socket
-    int sock;
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
+    int sock = get_socket();
+
+    connect_socket(sock, server_ip, server_port);
+    
+    int epollfd = epoll_create(1); // Since Linux 2.6.8, the size argument is ignored, but must be greater than zero
+    if (epollfd == -1)
     {
-        perror("could not create socket");
+        perror("epoll create error");
         exit(1);
     }
-    
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(server_ip.c_str());
-    server_addr.sin_port = htons(server_port);
- 
-    //Connect to remote server
-    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+
+    Client client(PROXY_ID, sock, epollfd);
+
+    epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = STDIN_FILENO;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, STDIN_FILENO, &ev) == -1) 
     {
-        perror("connect failed");
+        perror("epoll_ctl add STDIN_FILENO");
         exit(1);
     }
-    
+
+    ev.events = EPOLLOUT;
+    ev.data.fd = STDOUT_FILENO;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, STDOUT_FILENO, &ev) == -1) 
+    {
+        perror("epoll_ctl add STDOUT_FILENO");
+        exit(1);
+    }
+
     //keep communicating with server
-    int count = 0;
+    epoll_event *events = new epoll_event[MAX_EVENT_NUM]; // alloc in heap
     while(1)
     {
-        char message[BUF_SIZE];
-        
-        sprintf(message, "%d", count++);
-        int msg_len = strlen(message);
-
-        string send_buf;
-        send_buf.append((char*)msg_len, sizeof(int));
-        send_buf.append(message, msg_len);
-        
-        //Send count
-        print("[Send]: %s\n", message);
-        if( send(sock, send_buf.c_str(), buf.size(), 0) < 0)
+        int nfds = epoll_wait(epollfd, events, MAX_EVENT_NUM, -1);
+        if (nfds == -1) 
         {
-            perror("send failed");
+            perror("epoll_pwait");
             exit(1);
         }
 
-        //Receive a reply from the server
-        if( recv(sock, message, BUF_SIZE, 0) < 0)
+        for (int i = 0; i < nfds; ++i) 
         {
-            perror("recv failed");
-            exit(1);
+            if (sock == events[i].data.fd)
+            {
+                if (events[i].events & EPOLLIN)
+                {
+                    // ready to recv
+                    client.on_recv();
+                }
+                else if (events[i].events & EPOLLOUT)
+                {
+                    // ready to send
+                    client.on_send();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            else if (STDIN_FILENO == events[i].data.fd)
+            {
+                char buf[BUF_SIZE];
+                read(STDIN_FILENO, buf, BUF_SIZE);
+                unsigned int buf_len = strlen(buf);
+                Package pkg = Package(buf_len, string(buf));
+                client.send_pkg(pkg);
+            }
+            else if (STDOUT_FILENO == events[i].data.fd)
+            {
+                vector<Package> pkgs = client.recv_pkg();
+                for (int i = 0; i < pkgs.size(); ++i)
+                {
+                    write(STDOUT_FILENO, pkgs[i].serialize().c_str(), pkgs[i].serialize().size());
+                }
+            }
         }
-
-        int recv_size = *(int *)message;
-        string recv(message+sizeof(int), recv_size);
-        
-
-        print("[Recv]: %s\n", recv.c_str());
-        sleep(interval);
     }
-    
-    close(sock);
     exit(0);
 }

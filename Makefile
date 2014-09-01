@@ -8,6 +8,10 @@ azusa: protocol node socketop
 	-mkdir bin
 	g++ -o bin/azusa src/azusa.cpp build/Protocol.o build/Node.o build/SocketOp.o -lpthread $(DEBUG)
 
+tsumugi: protocol node socketop
+	-mkdir bin
+	g++ -o bin/tsumugi src/tsumugi.cpp build/Protocol.o build/Node.o build/SocketOp.o $(DEBUG)
+
 
 protocol:
 	-mkdir build

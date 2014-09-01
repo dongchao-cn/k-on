@@ -12,7 +12,9 @@ Package::Package(string &stream)
         throw StreamEOFException;
     content = stream.substr(sizeof(size), size);
     stream = stream.substr(sizeof(int)+size);
-};
+}
+
+Package::Package(unsigned int size, string content) : size(size), content(content){ }
 
 string Package::serialize()
 {
@@ -21,6 +23,11 @@ string Package::serialize()
     ret.append((char*)&size, sizeof(int));
     ret.append(content);
     return ret;
+}
+
+void Package::print()
+{
+    printf("%s\n", content.c_str());
 }
 
 void Package::str2pkg(string &stream, vector<Package> &pkgs)
@@ -54,11 +61,11 @@ void Package::pkg2str(vector<Package> &pkgs, string &stream)
 
 ProxyPackage::ProxyPackage(int proxy_id, int client_sock, string &stream) : \
     proxy_id(proxy_id), client_sock(client_sock), pkg(Package(stream))
-{ };
+{ }
 
 ProxyPackage::ProxyPackage(int proxy_id, int client_sock, Package &pkg) : \
     proxy_id(proxy_id), client_sock(client_sock), pkg(pkg)
-{ };
+{ }
 
 string ProxyPackage::serialize()
 {
@@ -83,6 +90,12 @@ int const ProxyPackage::get_proxy_id()
 Package const &ProxyPackage::get_pkg()
 {
     return pkg;
+}
+
+void ProxyPackage::print()
+{
+    printf("[%d %d] ", proxy_id, client_sock);
+    pkg.print();
 }
 
 void ProxyPackage::str2pkg(int proxy_id, int client_sock, string &stream, vector<ProxyPackage> &pkgs)

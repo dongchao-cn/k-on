@@ -58,3 +58,21 @@ int accept_socket(int listen_sock)
     socklen_t addr_size = sizeof(sockaddr_in);
     return accept(listen_sock, (sockaddr *)&client, &addr_size);
 }
+
+void connect_socket(int sock, string ip, int port)
+{
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    server_addr.sin_port = htons(port);
+
+    if( connect(sock, (sockaddr *)&server_addr, sizeof(server_addr)) )
+    {
+        perror("connect_server error");
+        exit(1);
+    }
+}
+
+
+
+

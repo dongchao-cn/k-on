@@ -28,25 +28,8 @@ class ServerManager
 
     int connect_server(string ip, int port)
     {
-        int sock;
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock == -1)
-        {
-            perror("get_socket error");
-            exit(1);
-        }
-
-        sockaddr_in server_addr;
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
-        server_addr.sin_port = htons(port);
-
-        if( connect(sock, (sockaddr *)&server_addr, sizeof(server_addr)) )
-        {
-            perror("connect_server error");
-            exit(1);
-        }
-
+        int sock = get_socket();
+        connect_socket(sock, ip, port);
         return sock;
     }
 
