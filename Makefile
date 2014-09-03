@@ -10,7 +10,7 @@ azusa: protocol node socketop
 
 tsumugi: protocol node socketop
 	-mkdir bin
-	g++ -o bin/tsumugi src/tsumugi.cpp build/Protocol.o build/Node.o build/SocketOp.o $(DEBUG)
+	g++ -o bin/tsumugi src/tsumugi.cpp build/Protocol.o build/Node.o build/SocketOp.o -lpthread $(DEBUG)
 
 yui: protocol node socketop
 	-mkdir bin
@@ -23,6 +23,10 @@ protocol:
 node:
 	-mkdir build
 	g++ -c src/Node.cpp -o build/Node.o $(DEBUG)
+
+worker:
+	-mkdir build
+	g++ -c src/Worker.cpp -o build/Worker.o $(DEBUG)
 
 socketop:
 	-mkdir build

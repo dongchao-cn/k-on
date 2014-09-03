@@ -2,6 +2,7 @@
 #define _Exception
 
 #define StreamEOFException 1
-#define EpollAddException 2
+#define EpollException 2
+#define NodeVaildException 3
 
 #endif

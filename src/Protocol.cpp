@@ -59,19 +59,18 @@ void Package::pkg2str(vector<Package> &pkgs, string &stream)
 
 
 
-ProxyPackage::ProxyPackage(int proxy_id, int client_sock, string &stream) : \
-    proxy_id(proxy_id), client_sock(client_sock), pkg(Package(stream))
+ProxyPackage::ProxyPackage(int client_sock, string &stream) : \
+    client_sock(client_sock), pkg(Package(stream))
 { }
 
-ProxyPackage::ProxyPackage(int proxy_id, int client_sock, Package &pkg) : \
-    proxy_id(proxy_id), client_sock(client_sock), pkg(pkg)
+ProxyPackage::ProxyPackage(int client_sock, Package &pkg) : \
+    client_sock(client_sock), pkg(pkg)
 { }
 
 string ProxyPackage::serialize()
 {
     // return the package to buffer
     string ret;
-    ret.append((char*)&proxy_id, sizeof(int));
     ret.append((char*)&client_sock, sizeof(int));
     ret.append(pkg.serialize());
     return ret;
@@ -82,11 +81,6 @@ int const ProxyPackage::get_client_sock()
     return client_sock;
 }
 
-int const ProxyPackage::get_proxy_id()
-{
-    return proxy_id;
-}
-
 Package const &ProxyPackage::get_pkg()
 {
     return pkg;
@@ -94,17 +88,17 @@ Package const &ProxyPackage::get_pkg()
 
 void ProxyPackage::print()
 {
-    printf("[%d %d] ", proxy_id, client_sock);
+    printf("[%d] ", client_sock);
     pkg.print();
 }
 
-void ProxyPackage::str2pkg(int proxy_id, int client_sock, string &stream, vector<ProxyPackage> &pkgs)
+void ProxyPackage::str2pkg(int client_sock, string &stream, vector<ProxyPackage> &pkgs)
 {
     while (1)
     {
         try
         {
-            pkgs.push_back(ProxyPackage(proxy_id, client_sock, stream));
+            pkgs.push_back(ProxyPackage(client_sock, stream));
         }
         catch (int e)
         {

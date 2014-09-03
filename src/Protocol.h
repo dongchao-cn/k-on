@@ -4,7 +4,6 @@
 #include <string>
 #include <boost/container/vector.hpp>
 #include "exception.h"
-#include "Protocol.h"
 using namespace std;
 
 
@@ -29,26 +28,23 @@ public:
 
 class ProxyPackage
 {
-    int proxy_id;
     int client_sock;
     Package pkg;
 
 public:
-    ProxyPackage(int proxy_id, int client_sock, string &stream);
+    ProxyPackage(int client_sock, string &stream);
 
-    ProxyPackage(int proxy_id, int client_sock, Package &pkg);
+    ProxyPackage(int client_sock, Package &pkg);
     
     string serialize();
 
     int const get_client_sock();
 
-    int const get_proxy_id();
-
     Package const &get_pkg();
 
     void print();
 
-    static void str2pkg(int proxy_id, int client_sock, string &stream, vector<ProxyPackage> &pkgs);
+    static void str2pkg(int client_sock, string &stream, vector<ProxyPackage> &pkgs);
 
     static void pkg2str(vector<ProxyPackage> &pkgs, string &stream);
 };
